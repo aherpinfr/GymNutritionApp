@@ -7,7 +7,7 @@ def run():
     conn = sqlite3.connect('suivi_forme.db')
     c = conn.cursor()
 
-    # Table des exercices
+    # Création des tables (exercices et performances)
     c.execute('''
         CREATE TABLE IF NOT EXISTS exercices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +15,6 @@ def run():
             parametres TEXT
         )
     ''')
-    # Table des performances
     c.execute('''
         CREATE TABLE IF NOT EXISTS performances (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,8 +28,19 @@ def run():
 
     st.title("Suivi Gym")
 
-    # Ajouter un nouvel exercice
-    st.header("Ajouter un exercice")
+    # Sommaire cliquable
+    st.markdown("""
+    <h3>Sommaire</h3>
+    <ul>
+        <li><a href="#ajouter-un-exercice">Ajouter un exercice</a></li>
+        <li><a href="#supprimer-un-exercice">Supprimer un exercice</a></li>
+        <li><a href="#enregistrer-une-performance">Enregistrer une performance</a></li>
+        <li><a href="#historique-des-performances">Historique des performances</a></li>
+    </ul>
+    """, unsafe_allow_html=True)
+
+    # --- Ajouter un exercice ---
+    st.markdown("<h2 id='ajouter-un-exercice'>Ajouter un exercice</h2>", unsafe_allow_html=True)
     with st.form("ajout_exercice"):
         nom_ex = st.text_input("Nom de l'exercice (ex : Elliptique, Développé couché, etc.)")
         parametres = st.text_area("Paramètres à suivre (séparés par des virgules, ex : km, durée, calories)")
@@ -40,23 +50,27 @@ def run():
             conn.commit()
             st.success(f"Exercice '{nom_ex}' ajouté avec les paramètres : {parametres}")
 
-    # Liste des exercices existants
+    # --- Supprimer un exercice ---
     c.execute("SELECT id, nom, parametres FROM exercices")
     exercices = c.fetchall()
+
+    st.markdown("<h2 id='supprimer-un-exercice'>Supprimer un exercice</h2>", unsafe_allow_html=True)
     if exercices:
-        st.header("Supprimer un exercice")
         ex_supp_dict = {f"{nom} ({parametres})": ex_id for ex_id, nom, parametres in exercices}
         ex_supp_choix = st.selectbox("Sélectionne un exercice à supprimer", list(ex_supp_dict.keys()))
-    if st.button("Supprimer cet exercice"):
-        ex_id_to_del = ex_supp_dict[ex_supp_choix]
-        # Supprimer aussi les performances associées
-        c.execute("DELETE FROM performances WHERE exercice_id = ?", (ex_id_to_del,))
-        c.execute("DELETE FROM exercices WHERE id = ?", (ex_id_to_del,))
-        conn.commit()
-        st.success(f"Exercice '{ex_supp_choix}' et ses performances associées supprimés.")
-        st.experimental_rerun()
+        if st.button("Supprimer cet exercice"):
+            ex_id_to_del = ex_supp_dict[ex_supp_choix]
+            c.execute("DELETE FROM performances WHERE exercice_id = ?", (ex_id_to_del,))
+            c.execute("DELETE FROM exercices WHERE id = ?", (ex_id_to_del,))
+            conn.commit()
+            st.success(f"Exercice '{ex_supp_choix}' et ses performances associées supprimés.")
+            st.experimental_rerun()
+    else:
+        st.info("Aucun exercice créé pour le moment.")
+
+    # --- Enregistrer une performance ---
+    st.markdown("<h2 id='enregistrer-une-performance'>Enregistrer une performance</h2>", unsafe_allow_html=True)
     if exercices:
-        st.header("Enregistrer une performance")
         ex_options = {f"{nom} ({parametres})": (ex_id, parametres) for ex_id, nom, parametres in exercices}
         choix = st.selectbox("Choisis un exercice", list(ex_options.keys()))
         ex_id, params = ex_options[choix]
@@ -76,8 +90,8 @@ def run():
                 conn.commit()
                 st.success(f"Performance enregistrée pour {choix} le {date}")
 
-        # Historique des performances pour l'exercice sélectionné
-        st.subheader("Historique des performances")
+        # --- Historique des performances ---
+        st.markdown("<h2 id='historique-des-performances'>Historique des performances</h2>", unsafe_allow_html=True)
         c.execute("SELECT date, donnees FROM performances WHERE exercice_id=? ORDER BY date DESC", (ex_id,))
         lignes = c.fetchall()
         if lignes:
