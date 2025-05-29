@@ -25,7 +25,7 @@ def run():
             nouvelle_ligne = {"date": date, "valeur": poids}
             conn.append(worksheet="poids", data=[nouvelle_ligne])
             st.success(f"Poids de {poids} kg enregistré le {date}")
-            st.experimental_rerun()  # Recharge la page pour afficher la nouvelle donnée
+            st.rerun()  # Recharge la page pour afficher la nouvelle donnée
 
     st.subheader("Historique des poids")
     if not df_poids.empty:
