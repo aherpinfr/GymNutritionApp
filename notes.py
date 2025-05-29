@@ -6,6 +6,10 @@ from streamlit_gsheets import GSheetsConnection
 def run():
     st.title("Mes Notes")
 
+    if st.button("🔄 Rafraîchir les données"):
+        st.cache_data.clear()
+        st.rerun()
+
     # Connexion à Google Sheets
     conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -31,6 +35,7 @@ def run():
             # Réécrire tout dans la feuille
             conn.update(worksheet="notes", data=df_notes)
             st.success("Note enregistrée avec succès !")
+            st.cache_data.clear()
             st.rerun()
 
     # Affichage des notes avec bouton de suppression
@@ -54,6 +59,7 @@ def run():
                     df_notes_sorted = df_notes_sorted.drop(idx).reset_index(drop=True)
                     conn.update(worksheet="notes", data=df_notes_sorted)
                     st.success("Note supprimée avec succès !")
+                    st.cache_data.clear()
                     st.rerun()
             st.markdown("---")
     else:

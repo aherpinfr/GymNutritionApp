@@ -9,6 +9,10 @@ def run():
     st.title("Suivi nutritionnel")
 
     conn = st.connection("gsheets", type=GSheetsConnection)
+    
+    if st.button("🔄 Rafraîchir les données"):
+        st.cache_data.clear()
+        st.rerun()
 
     selected_date = st.date_input("Date", value=date.today())
     st.markdown(f"**Objectif calorique : {OBJECTIF_CAL} kcal**")
@@ -32,6 +36,7 @@ def run():
             df_nutrition = pd.concat([df_nutrition, pd.DataFrame([nouvelle_ligne])], ignore_index=True)
             conn.update(worksheet="nutrition", data=df_nutrition)
             st.success(f"{food} ajouté ({calories} kcal)")
+            st.cache_data.clear()
             st.rerun()
 
     # *** C'est ICI qu'on relit le DataFrame ***
@@ -60,6 +65,7 @@ def run():
                     df_nutrition = df_nutrition[~mask].reset_index(drop=True)
                     conn.update(worksheet="nutrition", data=df_nutrition)
                     st.success("Aliment supprimé !")
+                    st.cache_data.clear()
                     st.rerun()
     else:
         st.write("Aucun aliment enregistré pour cette date.")

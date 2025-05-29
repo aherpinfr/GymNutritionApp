@@ -5,14 +5,10 @@ st.set_page_config(page_title="Suivi Forme", page_icon="🏋️")
 st.sidebar.title("Navigation")
 page = st.sidebar.radio(
     "Aller à :",
-    ("Accueil", "Poids", "Gym", "Notes", "Suivi nutritionnel", "Télécharger les bases")
+    ("Accueil", "Poids", "Gym", "Notes", "Suivi nutritionnel")
 )
 
-if page == "Télécharger les bases":
-    import telechargement_db
-    telechargement_db.run()
-
-elif page == "Accueil":
+if page == "Accueil":
     st.title("Bienvenue Alexandre !")
     st.write("Bienvenue Alexandre sur ton app de suivi nutritionnelle et sportive !")
 
