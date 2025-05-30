@@ -23,11 +23,15 @@ def run():
     df_nutrition = df_nutrition.rename(columns={"entry_date": "date"})
     df_nutrition["date"] = pd.to_datetime(df_nutrition["date"], errors="coerce").dt.date
     df_nutrition["calories"] = pd.to_numeric(df_nutrition["calories"], errors="coerce").fillna(0)
-    calories_par_jour = df_nutrition.groupby("date", as_index=False)["calories"].sum()
+    calories_par_jour = df_nutrition.groupby("date", as_index=False)["calories"].sum().sort_values("date")
 
     # Fusion OUTER pour garder toutes les dates de poids
     df_merged = pd.merge(df_poids, calories_par_jour, on="date", how="left")
-    df_merged["calories"] = df_merged["calories"].fillna(0)  # Remplace NaN par 0 si pas de data nutrition
+    df_merged["calories"] = df_merged["calories"].fillna(0)
+
+    # Décaler les calories d'un jour vers le bas pour aligner calories veille <-> poids du jour
+    df_merged = df_merged.sort_values("date")
+    df_merged["calories_veille"] = df_merged["calories"].shift(1, fill_value=0)
 
     if df_merged.empty:
         st.warning("Aucune donnée à afficher.")
@@ -43,18 +47,18 @@ def run():
         line=dict(color="black", width=3)
     ))
 
-    # Barres pour les calories
+    # Barres pour les calories de la veille
     fig.add_trace(go.Bar(
-        x=df_merged["date"], y=df_merged["calories"],
-        name="Calories mangées", yaxis="y2", opacity=0.6
+        x=df_merged["date"], y=df_merged["calories_veille"],
+        name="Calories mangées la veille", yaxis="y2", opacity=0.6
     ))
 
     # Mise en page avec deux axes Y
     fig.update_layout(
-        title="Poids et calories mangées par jour",
+        title="Poids du jour vs calories mangées la veille",
         xaxis_title="Date",
         yaxis=dict(title="Poids (kg)", side="left"),
-        yaxis2=dict(title="Calories mangées", overlaying="y", side="right"),
+        yaxis2=dict(title="Calories mangées la veille", overlaying="y", side="right"),
         barmode="group",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )

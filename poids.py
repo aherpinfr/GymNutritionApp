@@ -6,7 +6,6 @@ from streamlit_gsheets import GSheetsConnection
 def run():
     st.title("Suivi du poids")
 
-    # Connexion à Google Sheets (utilise le nom défini dans secrets.toml)
     conn = st.connection("gsheets", type=GSheetsConnection)
 
     # Charger l'historique des poids depuis l'onglet "poids"
@@ -21,15 +20,17 @@ def run():
 
         if bouton and poids > 0:
             date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # Ajout de la nouvelle ligne dans Google Sheets
             nouvelle_ligne = {"date": date, "valeur": poids}
-            conn.append(worksheet="poids", data=[nouvelle_ligne])
+            # Ajouter la nouvelle ligne au DataFrame
+            df_poids = pd.concat([df_poids, pd.DataFrame([nouvelle_ligne])], ignore_index=True)
+            # Réécrire toute la feuille Google Sheets
+            conn.update(worksheet="poids", data=df_poids)
             st.success(f"Poids de {poids} kg enregistré le {date}")
-            st.rerun()  # Recharge la page pour afficher la nouvelle donnée
+            st.cache_data.clear()
+            st.rerun()
 
     st.subheader("Historique des poids")
     if not df_poids.empty:
-        # Affichage du DataFrame
         st.dataframe(
             df_poids.rename(columns={"date": "Date", "valeur": "Poids (kg)"}).sort_values("Date", ascending=False),
             use_container_width=True
